@@ -1,0 +1,59 @@
+# This script use same hyperparameters as mnist_valid, but train on the
+# whole dataset. Termination criterion is choosed so that runs as many epochs
+# that mnist_valid reach its lowest validation error.
+# And results in 1.05% test error.
+
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:pylearn2.datasets.mnist.MNIST {
+        which_set: "train",
+        shuffle: 0,
+    },
+    model: !obj:pylearn2.models.mlp.MLP {
+        batch_size : 100,
+        nvis: 784,
+        layers: [
+            !obj:pylearn2.models.mlp.RectifiedLinear {
+                max_col_norm: 4.4,
+                dim: 898,
+                irange: 0.009,
+                layer_name: 'h0',
+                init_bias: 0.000000
+            },
+            !obj:pylearn2.models.mlp.RectifiedLinear {
+                max_col_norm: 3.0,
+                dim: 1532,
+                irange: 0.06,
+                layer_name: 'h1',
+                init_bias: 0.000000
+            },
+            !obj:pylearn2.models.mlp.Softmax {
+                max_col_norm: 4.626974,
+                sparse_init: 0,
+                layer_name: 'y',
+                n_classes: 10
+            }
+        ]
+    },
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        monitoring_dataset : {
+            test: !obj:pylearn2.datasets.mnist.MNIST {
+                which_set: "test",
+                shuffle: 0,
+            },
+        },
+        learning_rate: 0.1,
+        learning_rule: !obj:pylearn2.training_algorithms.learning_rule.Momentum {
+            init_momentum: 0.5
+        },
+    },
+    extensions: [
+        !obj:plot_channels.PlotChannels {
+            channels: [
+                "test_y_misclass",
+                "test_objective"
+            ]
+        }
+    ],
+    save_path: "${PYLEARN2_TRAIN_FILE_FULL_STEM}.pkl",
+    save_freq : 1
+}
